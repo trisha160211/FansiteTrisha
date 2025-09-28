@@ -242,7 +242,7 @@
     <div class="ranking-others" id="ranking-others"></div>
     <button class="restart-btn" onclick="restartSorter()">Start a New Sort</button>
 
-    <div class="result-footer">
+    <div class="result-footer" id="result-footer">
       To appreciate the photographers for capturing Trisha’s best photos, 
       please follow and like them <a href="https://x.com/rasyasyawal_/status/1972267641533550819" target="_blank">here</a>.
     </div>
@@ -266,6 +266,7 @@
     const progressBar = document.getElementById("progress-bar");
     const progressText = document.getElementById("progress-text");
     const undoBtn = document.getElementById("undoBtn");
+    const resultFooter = document.getElementById("result-footer");
 
     let fotoList = [];
     let totalSteps = 0;
@@ -423,7 +424,9 @@
         currentStep--;
         if (history.length === 0) undoBtn.style.display = "none";
         renderProgress();
-        showNextPair();
+        card1.src = f1;
+        card2.src = f2;
+        lastPair = [f1, f2];
       }
     }
 
@@ -438,21 +441,22 @@
         if (i < 3) {
           const div = document.createElement("div");
           div.className = "top3-item";
-          div.innerHTML = `
-            <div class="top3-rank">${i+1}</div>
-            <img src="${foto}" alt="Photo ${i+1}">
-          `;
+          div.innerHTML = `<div class="top3-rank">${i+1}</div><img src="${foto}" alt="Photo ${i+1}">`;
           rankingTop3.appendChild(div);
         } else {
           const div = document.createElement("div");
           div.className = "other-item";
-          div.innerHTML = `
-            <img src="${foto}" alt="Photo ${i+1}">
-            <div class="other-rank">#${i+1}</div>
-          `;
+          div.innerHTML = `<img src="${foto}" alt="Photo ${i+1}"><div class="other-rank">#${i+1}</div>`;
           rankingOthers.appendChild(div);
         }
       });
+
+      // Show/hide footer
+      if (jenisFoto.value === "Trishelca") {
+        resultFooter.style.display = "none";
+      } else {
+        resultFooter.style.display = "block";
+      }
     }
 
     function restartSorter() {
