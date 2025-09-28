@@ -72,6 +72,7 @@
     .card {
       background: white; padding: 12px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       width: 220px; cursor: pointer; transition: transform 0.2s;
+      position: relative;
     }
     .card:hover { transform: scale(1.05); }
     .card img { width: 100%; border-radius: 8px; }
@@ -92,6 +93,24 @@
       display: inline-block; background: #ff6fa5; color: white; padding: 6px 12px;
       border-radius: 20px; margin: 3px; font-size: 13px;
     }
+
+    /* Badge kategori */
+    .category-label {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: bold;
+      border-radius: 8px;
+      color: #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+    .category-label.mng { background: #ff80ab; }       /* pink cute */
+    .category-label.off { background: #82b1ff; }      /* biru lembut */
+    .category-label.onair { background: #4db6ac; }    /* hijau tosca */
+    .category-label.trishelca { background: #ffd54f; color:#333; } /* kuning pastel */
+    .category-label.other { background: #ba68c8; }    /* ungu soft */
 
     /* ---------------- RESULT SECTION ---------------- */
     #result-section { display: none; margin-top: 30px; }
@@ -116,6 +135,7 @@
       align-items: center;
       gap: 10px;
       width: auto;
+      position: relative;
     }
     .top3-item img {
       width: 180px;
@@ -150,6 +170,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      position: relative;
     }
     .other-item img {
       width: 100px;
@@ -226,9 +247,15 @@
     <div class="sort-title">Choose your favorite Trisha</div>
 
     <div class="sort-container">
-      <div class="card" id="card1"><img src="https://via.placeholder.com/200x250" alt="Photo 1"></div>
+      <div class="card" id="card1">
+        <div class="category-label"></div>
+        <img src="https://via.placeholder.com/200x250" alt="Photo 1">
+      </div>
       <div class="or-text">OR</div>
-      <div class="card" id="card2"><img src="https://via.placeholder.com/200x250" alt="Photo 2"></div>
+      <div class="card" id="card2">
+        <div class="category-label"></div>
+        <img src="https://via.placeholder.com/200x250" alt="Photo 2">
+      </div>
     </div>
 
     <button class="tie-btn" id="tieBtn">TIE!</button>
@@ -269,8 +296,6 @@
     const rankingOthers = document.getElementById("ranking-others");
     const filterInfo = document.getElementById("filter-info");
     const selectedFilters = document.getElementById("selected-filters");
-    const card1 = document.getElementById("card1").querySelector("img");
-    const card2 = document.getElementById("card2").querySelector("img");
     const progressBar = document.getElementById("progress-bar");
     const progressText = document.getElementById("progress-text");
     const undoBtn = document.getElementById("undoBtn");
@@ -320,6 +345,35 @@
         }
       }
       return result;
+    }
+
+    // --- DETEKSI KATEGORI ---
+    function getCategoryFromFilename(filename) {
+      if (filename.startsWith("mng")) return "Meet and Greet";
+      if (filename.startsWith("trishelca")) return "Trishelca";
+      if (filename.startsWith("off")) {
+        // on air khusus
+        if (["off24-1.jpg","off24-4.jpg","off25-8.jpg"].includes(filename)) {
+          return "On Air";
+        }
+        return "Off Air";
+      }
+      return "Other";
+    }
+
+    function setCard(cardElem, foto) {
+      const img = cardElem.querySelector("img");
+      const label = cardElem.querySelector(".category-label");
+      img.src = foto;
+
+      const kategori = getCategoryFromFilename(foto);
+      label.textContent = kategori;
+      label.className = "category-label " + (
+        kategori === "Meet and Greet" ? "mng" :
+        kategori === "Off Air" ? "off" :
+        kategori === "On Air" ? "onair" :
+        kategori === "Trishelca" ? "trishelca" : "other"
+      );
     }
 
     function getRandomPair() {
@@ -400,8 +454,8 @@
       }
       const pair = getRandomPair();
       if (!pair) return;
-      card1.src = pair[0];
-      card2.src = pair[1];
+      setCard(document.getElementById("card1"), pair[0]);
+      setCard(document.getElementById("card2"), pair[1]);
     }
 
     function renderProgress() {
@@ -432,8 +486,8 @@
         currentStep--;
         if (history.length === 0) undoBtn.style.display = "none";
         renderProgress();
-        card1.src = f1;
-        card2.src = f2;
+        setCard(document.getElementById("card1"), f1);
+        setCard(document.getElementById("card2"), f2);
         lastPair = [f1, f2];
       }
     }
@@ -446,20 +500,34 @@
       filterInfo.textContent = `Filters: ${currentFilterText}`;
       let ranking = Object.entries(score).sort((a, b) => b[1] - a[1]);
       ranking.forEach(([foto], i) => {
+        const kategori = getCategoryFromFilename(foto);
+        const labelClass = (
+          kategori === "Meet and Greet" ? "mng" :
+          kategori === "Off Air" ? "off" :
+          kategori === "On Air" ? "onair" :
+          kategori === "Trishelca" ? "trishelca" : "other"
+        );
         if (i < 3) {
           const div = document.createElement("div");
           div.className = "top3-item";
-          div.innerHTML = `<div class="top3-rank">${i+1}</div><img src="${foto}" alt="Photo ${i+1}">`;
+          div.innerHTML = `
+            <div class="top3-rank">${i+1}</div>
+            <div class="category-label ${labelClass}">${kategori}</div>
+            <img src="${foto}" alt="Photo ${i+1}">
+          `;
           rankingTop3.appendChild(div);
         } else {
           const div = document.createElement("div");
           div.className = "other-item";
-          div.innerHTML = `<img src="${foto}" alt="Photo ${i+1}"><div class="other-rank">#${i+1}</div>`;
+          div.innerHTML = `
+            <div class="category-label ${labelClass}">${kategori}</div>
+            <img src="${foto}" alt="Photo ${i+1}">
+            <div class="other-rank">#${i+1}</div>
+          `;
           rankingOthers.appendChild(div);
         }
       });
 
-      // Show/hide footer
       if (jenisFoto.value === "Trishelca") {
         resultFooter.style.display = "none";
       } else {
