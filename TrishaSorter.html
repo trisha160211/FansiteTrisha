@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Trisha Sorter</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #ffe4ec;
+      margin: 0;
+      padding: 40px;
+      font-size: 22px;
+    }
+    h1 { color: #d6336c; font-size: 50px; }
+    p { color: #444; font-size: 26px; }
+
+    /* ---------------- FILTER SECTION ---------------- */
+    #filter-section { margin-top: 20px; }
+    .custom-select {
+      display: block;
+      margin: 15px auto;
+      padding: 16px;
+      border-radius: 8px;
+      border: 2px solid #ff6fa5;
+      font-size: 22px;
+      width: 320px;
+      background: white;
+      color: #333;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml;utf8,<svg fill='gray' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 20px;
+    }
+    .custom-select:focus {
+      outline: none;
+      border-color: #e05285;
+      box-shadow: 0 0 5px rgba(224, 82, 133, 0.5);
+    }
+    .switch { display: inline-flex; align-items: center; margin-top: 20px; cursor: pointer; font-size: 22px; }
+    .switch.disabled { opacity: 0.5; pointer-events: none; }
+    .switch input { display: none; }
+    .slider {
+      width: 70px; height: 36px; background: #ccc; border-radius: 20px; margin-right: 15px; position: relative; cursor: pointer;
+    }
+    .slider::before {
+      content: ""; position: absolute; width: 28px; height: 28px; background: white; border-radius: 50%;
+      top: 4px; left: 4px; transition: transform 0.3s;
+    }
+    input:checked + .slider { background: #ff6fa5; }
+    input:checked + .slider::before { transform: translateX(34px); }
+    button {
+      margin-top: 30px; padding: 18px 36px; font-size: 26px; border: none;
+      background: #ff6fa5; color: white; border-radius: 10px; cursor: pointer;
+    }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    button:hover:not(:disabled) { background: #e05285; }
+
+    /* ---------------- SORTER SECTION ---------------- */
+    #sorter-section { display: none; margin-top: 30px; }
+    .sort-container {
+      display: flex; justify-content: center; align-items: center; gap: 40px; margin: 40px 0;
+    }
+    .card {
+      background: white; padding: 12px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 220px; cursor: pointer; transition: transform 0.2s;
+    }
+    .card:hover { transform: scale(1.05); }
+    .card img { width: 100%; border-radius: 8px; }
+    .or-text { font-size: 24px; font-weight: bold; color: #d6336c; align-self: center; }
+    .tie-btn, .undo-btn {
+      display: inline-block; margin: 15px auto; padding: 14px 40px; font-size: 20px; border: none;
+      border-radius: 25px; background: #ff4d6d; color: white; cursor: pointer;
+    }
+    .tie-btn:hover, .undo-btn:hover { background: #e63956; }
+    .undo-btn { background: #6c757d; display: none; }
+    .undo-btn:hover { background: #5a6268; }
+    .progress-container { width: 80%; margin: 20px auto; text-align: left; }
+    .progress-label { font-weight: bold; margin-bottom: 5px; }
+    .progress-bar { width: 100%; background: #f5b5c5; border-radius: 10px; overflow: hidden; }
+    .progress { height: 14px; background: #ff6fa5; width: 0%; transition: width 0.3s; }
+    .filters { margin-top: 15px; font-size: 14px; }
+    .filter-tag {
+      display: inline-block; background: #ff6fa5; color: white; padding: 6px 12px;
+      border-radius: 20px; margin: 3px; font-size: 13px;
+    }
+
+    /* ---------------- RESULT SECTION ---------------- */
+    #result-section { display: none; margin-top: 30px; }
+    #filter-info {
+      margin-bottom: 25px;
+      font-size: 20px;
+      color: #333;
+    }
+    .ranking-top3 {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 40px;
+    }
+    .top3-item {
+      background: white;
+      border-radius: 10px;
+      padding: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      width: auto;
+    }
+    .top3-item img {
+      width: 180px;
+      border-radius: 8px;
+    }
+    .top3-rank {
+      font-size: 22px;
+      font-weight: bold;
+      color: #fff;
+      background: #ff6fa5;
+      border-radius: 50%;
+      width: 42px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .ranking-others {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      justify-items: center;
+    }
+    .other-item {
+      background: white;
+      border-radius: 8px;
+      padding: 6px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+      width: 120px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .other-item img {
+      width: 100px;
+      border-radius: 6px;
+    }
+    .other-rank {
+      margin-top: 4px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #d6336c;
+    }
+
+    .restart-btn {
+      margin-top: 40px;
+      padding: 16px 30px;
+      font-size: 22px;
+      border: none;
+      background: #ff6fa5;
+      color: white;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    .restart-btn:hover { background: #e05285; }
+
+    /* ---------------- RESULT FOOTER ---------------- */
+    .result-footer {
+      margin-top: 30px;
+      font-size: 16px;
+      color: #555;
+    }
+    .result-footer a {
+      color: #d6336c;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    .result-footer a:hover {
+      color: #ff6fa5;
+    }
+  </style>
+</head>
+<body>
+  <!-- FILTER SECTION -->
+  <div id="filter-section">
+    <h1>Welcome to Trisha Sorter!</h1>
+    <p>Select filters to sort Trisha’s photos</p>
+
+    <div class="filters">
+      <select id="jenisFoto" class="custom-select">
+        <option value="">Select Category</option>
+        <option value="All Photos">All Photos</option>
+        <option value="Meet and Greet">Meet and Greet</option>
+        <option value="Off Air & On Air">Off Air & On Air</option>
+        <option value="Trishelca">Trishelca</option>
+      </select>
+
+      <select id="tahunFoto" class="custom-select" disabled>
+        <option value="">Select Year</option>
+        <option value="2024">2024</option>
+        <option value="2025">2025</option>
+      </select>
+
+      <label class="switch disabled" id="switchWrapper">
+        <input type="checkbox" id="allYear" disabled>
+        <span class="slider"></span>
+        <span>All Years</span>
+      </label>
+
+      <button id="startBtn" disabled>START SORTING!</button>
+    </div>
+  </div>
+
+  <!-- SORTER SECTION -->
+  <div id="sorter-section">
+    <div class="sort-container">
+      <div class="card" id="card1"><img src="https://via.placeholder.com/200x250" alt="Photo 1"></div>
+      <div class="or-text">OR</div>
+      <div class="card" id="card2"><img src="https://via.placeholder.com/200x250" alt="Photo 2"></div>
+    </div>
+
+    <button class="tie-btn" id="tieBtn">TIE!</button>
+    <button class="undo-btn" id="undoBtn">UNDO LAST PICK</button>
+
+    <div class="progress-container">
+      <div class="progress-label">Sort Progress: <span id="progress-text">0%</span></div>
+      <div class="progress-bar"><div class="progress" id="progress-bar"></div></div>
+    </div>
+
+    <div class="filters" id="selected-filters"></div>
+  </div>
+
+  <!-- RESULT SECTION -->
+  <div id="result-section">
+    <h1>Your Results!</h1>
+    <div id="filter-info"></div>
+    <div class="ranking-top3" id="ranking-top3"></div>
+    <div class="ranking-others" id="ranking-others"></div>
+    <button class="restart-btn" onclick="restartSorter()">Start a New Sort</button>
+
+    <div class="result-footer">
+      To appreciate the photographers for capturing Trisha’s best photos, 
+      please follow and like them <a href="https://x.com/rasyasyawal_/status/1972267641533550819" target="_blank">here</a>.
+    </div>
+  </div>
+
+  <script>
+    const startBtn = document.getElementById("startBtn");
+    const jenisFoto = document.getElementById("jenisFoto");
+    const tahunFoto = document.getElementById("tahunFoto");
+    const allYear = document.getElementById("allYear");
+    const switchWrapper = document.getElementById("switchWrapper");
+    const filterSection = document.getElementById("filter-section");
+    const sorterSection = document.getElementById("sorter-section");
+    const resultSection = document.getElementById("result-section");
+    const rankingTop3 = document.getElementById("ranking-top3");
+    const rankingOthers = document.getElementById("ranking-others");
+    const filterInfo = document.getElementById("filter-info");
+    const selectedFilters = document.getElementById("selected-filters");
+    const card1 = document.getElementById("card1").querySelector("img");
+    const card2 = document.getElementById("card2").querySelector("img");
+    const progressBar = document.getElementById("progress-bar");
+    const progressText = document.getElementById("progress-text");
+    const undoBtn = document.getElementById("undoBtn");
+
+    let fotoList = [];
+    let totalSteps = 0;
+    let currentStep = 0;
+    const history = [];
+    const score = {};
+    let lastPair = [];
+    let currentFilterText = "";
+
+    const defaultTahunOptions = tahunFoto.innerHTML;
+
+    // ---------------- PHOTO SETS ----------------
+    const fotoSets = {
+      "Meet and Greet": {
+        2024: Array.from({length: 3}, (_, i) => `mng24-${i+1}.jpg`),
+        2025: Array.from({length: 3}, (_, i) => `mng25-${i+1}.jpg`)
+      },
+      "Off Air & On Air": {
+        2024: Array.from({length: 10}, (_, i) => `off24-${i+1}.jpg`),
+        2025: Array.from({length: 8}, (_, i) => `off25-${i+1}.jpg`)
+      },
+      "Trishelca": {
+        2024: Array.from({length: 11}, (_, i) => `trishelca24-${i+1}.jpg`),
+        2025: Array.from({length: 11}, (_, i) => `trishelca25-${i+1}.jpg`)
+      }
+    };
+
+    function getFotos(category, year, allYears) {
+      let result = [];
+      if (category === "All Photos") {
+        Object.keys(fotoSets).forEach(k => {
+          if (allYears) {
+            result = result.concat(fotoSets[k]["2024"] || [], fotoSets[k]["2025"] || []);
+          } else {
+            result = result.concat(fotoSets[k][year] || []);
+          }
+        });
+      } else {
+        if (allYears) {
+          result = [...(fotoSets[category]["2024"] || []), ...(fotoSets[category]["2025"] || [])];
+        } else {
+          result = fotoSets[category][year] || [];
+        }
+      }
+      return result;
+    }
+
+    function getRandomPair() {
+      if (fotoList.length < 2) return null;
+      let f1, f2;
+      do {
+        f1 = fotoList[Math.floor(Math.random() * fotoList.length)];
+        f2 = fotoList[Math.floor(Math.random() * fotoList.length)];
+      } while (f1 === f2 || (lastPair.includes(f1) && lastPair.includes(f2)));
+      lastPair = [f1, f2];
+      return [f1, f2];
+    }
+
+    function checkFilters() {
+      if (jenisFoto.value) {
+        tahunFoto.disabled = false;
+      } else {
+        tahunFoto.disabled = true;
+        tahunFoto.value = "";
+        allYear.disabled = true;
+        allYear.checked = false;
+        switchWrapper.classList.add("disabled");
+        tahunFoto.innerHTML = defaultTahunOptions;
+      }
+      if (jenisFoto.value && tahunFoto.value) {
+        allYear.disabled = false;
+        switchWrapper.classList.remove("disabled");
+      } else {
+        allYear.disabled = true;
+        allYear.checked = false;
+        switchWrapper.classList.add("disabled");
+      }
+      if (jenisFoto.value && (tahunFoto.value || allYear.checked)) {
+        startBtn.disabled = false;
+      } else {
+        startBtn.disabled = true;
+      }
+    }
+
+    jenisFoto.addEventListener("change", checkFilters);
+    tahunFoto.addEventListener("change", checkFilters);
+
+    allYear.addEventListener("change", () => {
+      if (allYear.checked) {
+        tahunFoto.innerHTML = `<option value="all" selected>2024 & 2025</option>`;
+        tahunFoto.disabled = true;
+      } else {
+        tahunFoto.innerHTML = defaultTahunOptions;
+        tahunFoto.disabled = false;
+      }
+      checkFilters();
+    });
+
+    startBtn.addEventListener("click", () => {
+      const category = jenisFoto.value;
+      const year = tahunFoto.value === "all" ? "2024 & 2025" : tahunFoto.value;
+      const isAllYear = allYear.checked;
+      filterSection.style.display = "none";
+      sorterSection.style.display = "block";
+      resultSection.style.display = "none";
+      fotoList = getFotos(category, year, isAllYear);
+      totalSteps = fotoList.length * 2;
+      currentStep = 0;
+      history.length = 0;
+      lastPair = [];
+      Object.keys(score).forEach(k => delete score[k]);
+      undoBtn.style.display = "none";
+      currentFilterText = `${category}, ${year}`;
+      selectedFilters.innerHTML = `<span class="filter-tag">${category}</span><span class="filter-tag">${year}</span>`;
+      showNextPair();
+      renderProgress();
+    });
+
+    function showNextPair() {
+      if (currentStep >= totalSteps) {
+        showRanking();
+        return;
+      }
+      const pair = getRandomPair();
+      if (!pair) return;
+      card1.src = pair[0];
+      card2.src = pair[1];
+    }
+
+    function renderProgress() {
+      let percent = Math.round((currentStep / totalSteps) * 100);
+      progressBar.style.width = percent + "%";
+      progressText.textContent = percent + "%";
+    }
+
+    function pick(action) {
+      const [f1, f2] = lastPair;
+      if (action === "left") score[f1] = (score[f1] || 0) + 1;
+      if (action === "right") score[f2] = (score[f2] || 0) + 1;
+      if (action === "tie") { score[f1] = (score[f1] || 0) + 1; score[f2] = (score[f2] || 0) + 1; }
+      history.push({action, f1, f2});
+      currentStep++;
+      if (history.length > 0) undoBtn.style.display = "inline-block";
+      renderProgress();
+      showNextPair();
+    }
+
+    function undoProgress() {
+      if (history.length > 0) {
+        const last = history.pop();
+        const {action, f1, f2} = last;
+        if (action === "left") score[f1]--;
+        if (action === "right") score[f2]--;
+        if (action === "tie") { score[f1]--; score[f2]--; }
+        currentStep--;
+        if (history.length === 0) undoBtn.style.display = "none";
+        renderProgress();
+        showNextPair();
+      }
+    }
+
+    function showRanking() {
+      sorterSection.style.display = "none";
+      resultSection.style.display = "block";
+      rankingTop3.innerHTML = "";
+      rankingOthers.innerHTML = "";
+      filterInfo.textContent = `Filters: ${currentFilterText}`;
+      let ranking = Object.entries(score).sort((a, b) => b[1] - a[1]);
+      ranking.forEach(([foto], i) => {
+        if (i < 3) {
+          const div = document.createElement("div");
+          div.className = "top3-item";
+          div.innerHTML = `
+            <div class="top3-rank">${i+1}</div>
+            <img src="${foto}" alt="Photo ${i+1}">
+          `;
+          rankingTop3.appendChild(div);
+        } else {
+          const div = document.createElement("div");
+          div.className = "other-item";
+          div.innerHTML = `
+            <img src="${foto}" alt="Photo ${i+1}">
+            <div class="other-rank">#${i+1}</div>
+          `;
+          rankingOthers.appendChild(div);
+        }
+      });
+    }
+
+    function restartSorter() {
+      filterSection.style.display = "block";
+      sorterSection.style.display = "none";
+      resultSection.style.display = "none";
+      jenisFoto.value = "";
+      tahunFoto.innerHTML = defaultTahunOptions;
+      tahunFoto.disabled = true;
+      allYear.checked = false;
+      allYear.disabled = true;
+      switchWrapper.classList.add("disabled");
+      startBtn.disabled = true;
+    }
+
+    document.getElementById("card1").addEventListener("click", () => pick("left"));
+    document.getElementById("card2").addEventListener("click", () => pick("right"));
+    document.getElementById("tieBtn").addEventListener("click", () => pick("tie"));
+    undoBtn.addEventListener("click", undoProgress);
+
+    checkFilters();
+  </script>
+</body>
+</html>
